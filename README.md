@@ -1,4 +1,4 @@
 AnyCAD_Sample
 =============
 
-demo how to use AnyCAD .Net API
+Use AnyCAD .Net API to create and render 3d models.
