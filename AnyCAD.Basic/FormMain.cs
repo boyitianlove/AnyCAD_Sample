@@ -13,9 +13,13 @@ namespace AnyCAD.Basic
 {
     public partial class FormMain : Form
     {
+        // The global application object
         Platform.Application theApplication = new Platform.Application();
-        Platform.View theView;
+        // BREP tool to create geometries.
         BrepTools shapeMaker = new BrepTools();
+        // Default 3d View
+        Platform.View theView;
+
 
         public FormMain()
         {
@@ -24,9 +28,13 @@ namespace AnyCAD.Basic
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            theApplication.LoadPlugins();
+            // Initialize the Application.
+            theApplication.Initialize();
             Size size = panel3d.Size;
-            theView = theApplication.Create3dView("OSG", panel3d.Handle.ToInt32(), size.Width, size.Height);
+
+            // Create the 3d View
+            theView = theApplication.Create3dView("View", panel3d.Handle.ToInt32(), size.Width, size.Height);
+
             theView.RequestDraw();
 
             this.timerDraw.Enabled = true;
@@ -48,6 +56,7 @@ namespace AnyCAD.Basic
 
         private void ShowTopoShape(TopoShape topoShape, int id)
         {
+            // Add the TopoShape to Scene.
             PrsNodeManager nodeManager = theView.GetNodeManager();
             Entity entity = new Entity();
             entity.SetTopoShape(topoShape);
