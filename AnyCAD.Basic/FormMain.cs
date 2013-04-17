@@ -33,7 +33,7 @@ namespace AnyCAD.Basic
             Size size = panel3d.Size;
 
             // Create the 3d View
-            theView = theApplication.Create3dView("View", panel3d.Handle.ToInt32(), size.Width, size.Height);
+            theView = theApplication.CreateView("AnyCAD.Default", panel3d.Handle.ToInt32(), size.Width, size.Height);
 
             theView.RequestDraw();
 
