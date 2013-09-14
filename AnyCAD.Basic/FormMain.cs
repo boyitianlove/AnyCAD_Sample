@@ -87,6 +87,7 @@ namespace AnyCAD.Basic
              
             SceneNode sceneNode = ShowTopoShape(box, 101);
 
+            // Face Style
             FaceStyle style = new FaceStyle();
             style.SetColor(new ColorValue(0.5f, 0.3f, 0, 1));
             sceneNode.SetFaceStyle(style);
