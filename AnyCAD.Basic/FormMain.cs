@@ -18,12 +18,13 @@ namespace AnyCAD.Basic
         // BREP tool to create geometries.
         BrepTools shapeMaker = new BrepTools();
         // Default 3d View
-        Platform.View theView;
+        Platform.View3d theView;
 
 
         public FormMain()
         {
             InitializeComponent();
+            this.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.OnMouseWheel);
         }
 
         private void FormMain_Load(object sender, EventArgs e)
@@ -33,13 +34,18 @@ namespace AnyCAD.Basic
             Size size = panel3d.Size;
 
             // Create the 3d View
-            theView = theApplication.CreateView("AnyCAD.Default", panel3d.Handle.ToInt32(), size.Width, size.Height);
+            theView = theApplication.CreateView(panel3d.Handle.ToInt32(), size.Width, size.Height);
 
             theView.RequestDraw();
 
             this.timerDraw.Enabled = true;
         }
-
+        private void FormMain_SizeChanged(object sender, EventArgs e)
+        {
+            Size size = panel3d.Size;
+            if(theView != null)
+                theView.OnSize(size.Width, size.Height);
+        }
         private void panel3d_Paint(object sender, PaintEventArgs e)
         {
             if (theView == null)
@@ -54,23 +60,19 @@ namespace AnyCAD.Basic
             theView.Redraw();
         }
 
-        private void ShowTopoShape(TopoShape topoShape, int id)
+        private SceneNode ShowTopoShape(TopoShape topoShape, int id)
         {
             // Add the TopoShape to Scene.
-            PrsNodeManager nodeManager = theView.GetNodeManager();
-            Entity entity = new Entity();
-            entity.SetTopoShape(topoShape);
-            PrsNode node = nodeManager.CreateSceneNode(entity, id, false);
-            if (node != null)
-            {
-                nodeManager.AddSceneNode(node);
-            }
+            TopoShapeConvert convertor = new TopoShapeConvert();
+            SceneNode faceNode = convertor.ToFaceNode(topoShape, 0.5f);
+            faceNode.SetId(id);
+            theView.GetSceneManager().AddNode(faceNode);
+            return faceNode;
         }
 
         private void ClearScene()
         {
-            PrsNodeManager nodeManager = theView.GetNodeManager();
-            nodeManager.RemoveAllSceneNode();
+            theView.GetSceneManager().ClearNodes();
         }
 
         private void sphereToolStripMenuItem_Click(object sender, EventArgs e)
@@ -82,13 +84,21 @@ namespace AnyCAD.Basic
         private void boxToolStripMenuItem_Click(object sender, EventArgs e)
         {
             TopoShape box = shapeMaker.MakeBox(new Vector3(40, -20, 0), new Vector3(0, 0, 1), new Vector3(30, 40, 60));
-            ShowTopoShape(box, 101);
+             
+            SceneNode sceneNode = ShowTopoShape(box, 101);
+
+            FaceStyle style = new FaceStyle();
+            style.SetColor(new ColorValue(0.5f, 0.3f, 0, 1));
+            sceneNode.SetFaceStyle(style);
         }
 
         private void cylinderToolStripMenuItem_Click(object sender, EventArgs e)
         {
             TopoShape cylinder = shapeMaker.MakeCylinder(new Vector3(80, 0, 0), new Vector3(0, 0, 1), 20, 100, 315);
-            ShowTopoShape(cylinder, 102);
+            SceneNode sceneNode = ShowTopoShape(cylinder, 102);
+            FaceStyle style = new FaceStyle();
+            style.SetColor(new ColorValue(0.1f, 0.3f, 0.8f, 1));
+            sceneNode.SetFaceStyle(style);
         }
 
         private void coneToolStripMenuItem_Click(object sender, EventArgs e)
@@ -118,6 +128,10 @@ namespace AnyCAD.Basic
             // Extrude
             TopoShape extrude = shapeMaker.Extrude(face, 100, new Vector3(0, 0, 1));
             ShowTopoShape(extrude, 104);
+
+            // Check find....
+            SceneNode findNode = theView.GetSceneManager().FindNode(104);
+            theView.GetSceneManager().SelectNode(findNode);
         }
 
         private void revoleToolStripMenuItem_Click(object sender, EventArgs e)
@@ -146,5 +160,40 @@ namespace AnyCAD.Basic
         {
             ClearScene();
         }
+
+        private void sTLToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "STL (*.stl)|*.stl|All Files(*.*)|*.*";
+
+            if (DialogResult.OK == dlg.ShowDialog())
+            {
+                TopoShape shape =  shapeMaker.LoadFile(dlg.FileName);
+                if( shape != null)
+                    ShowTopoShape(shape, 1000);
+
+            }
+        }
+
+        private void Pane3d_MouseDown(object sender, MouseEventArgs e)
+        {
+            ViewUtility.OnMouseDownEvent(theView, e);
+        }
+
+        private void Pane3d_MouseMove(object sender, MouseEventArgs e)
+        {
+            ViewUtility.OnMouseMoveEvent(theView, e);
+        }
+
+        private void Pane3d_MouseUp(object sender, MouseEventArgs e)
+        {
+            ViewUtility.OnMouseUpEvent(theView, e);
+        }
+        private void OnMouseWheel(object sender, MouseEventArgs e)
+        {
+            ViewUtility.OnMouseWheelEvent(theView, e);
+        }
+
+
     }
 }
